@@ -1,31 +1,67 @@
-local Config = require(script.Parent.Data.GameConfig)
+-- PortalSystem: Portal unlocking based on coins
+-- MapSetup creates the portal Parts; this script handles unlocking locked ones
 
-local centralIsland = workspace:FindFirstChild("CentralIsland")
-if not centralIsland then
-	warn("CentralIsland not found in workspace")
-	return
-end
+local Players = game:GetService("Players")
+local ServerStorage = game:GetService("ServerStorage")
 
-for name, data in pairs(Config.Portals) do
-	local portal = Instance.new("Part")
-	portal.Name = name .. "Portal"
-	portal.Size = Vector3.new(6, 10, 1)
-	portal.Position = data.Position
-	portal.Anchored = true
-	portal.CanCollide = false
-	portal.BrickColor = data.Unlocked and BrickColor.new("Bright green") or BrickColor.new("Really red")
-	portal.Transparency = 0.5
-	portal.Parent = centralIsland
-	
-	if data.Unlocked then
-		local click = Instance.new("ClickDetector")
-		click.Parent = portal
-		
-		click.MouseClick:Connect(function(player)
-			local char = player.Character
-			if char and char:FindFirstChild("HumanoidRootPart") then
-				char.HumanoidRootPart.CFrame = CFrame.new(data.Destination or Vector3.new(100, 20, 0))
+local economy = ServerStorage:WaitForChild("Economy")
+local portalsFolder = economy:WaitForChild("Portals")
+
+local unlockedPortals = {}
+
+local function tryUnlockPortals(player)
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if not leaderstats then return end
+	local coins = leaderstats:FindFirstChild("Coins")
+	if not coins then return end
+
+	if not unlockedPortals[player.UserId] then
+		unlockedPortals[player.UserId] = {}
+	end
+
+	local centralIsland = workspace:FindFirstChild("CentralIsland")
+	if not centralIsland then return end
+
+	for _, portalConfig in ipairs(portalsFolder:GetChildren()) do
+		local portalName = portalConfig.Name
+		local required = portalConfig:WaitForChild("RequiredCoins").Value
+		local destination = portalConfig:WaitForChild("Destination").Value
+
+		if coins.Value >= required and not unlockedPortals[player.UserId][portalName] then
+			unlockedPortals[player.UserId][portalName] = true
+
+			local portal = centralIsland:FindFirstChild(portalName .. "Portal")
+			if portal then
+				portal.Color = Color3.fromRGB(0, 255, 100)
+
+				local click = portal:FindFirstChildOfClass("ClickDetector")
+				if not click then
+					click = Instance.new("ClickDetector")
+					click.MaxActivationDistance = 12
+					click.Parent = portal
+				end
+
+				click.MouseClick:Connect(function(clickPlayer)
+					if clickPlayer == player and clickPlayer.Character then
+						clickPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(destination + Vector3.new(0, 5, 0))
+					end
+				end)
 			end
-		end)
+		end
 	end
 end
+
+Players.PlayerAdded:Connect(function(player)
+	local leaderstats = player:WaitForChild("leaderstats", 10)
+	if not leaderstats then return end
+	local coins = leaderstats:WaitForChild("Coins", 5)
+	if not coins then return end
+
+	coins.Changed:Connect(function()
+		tryUnlockPortals(player)
+	end)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+	unlockedPortals[player.UserId] = nil
+end)

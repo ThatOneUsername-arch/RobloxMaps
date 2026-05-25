@@ -61,7 +61,8 @@ local function updateHUD(player)
 	if not gui then return end
 
 	local label = gui.CoinFrame:FindFirstChild("CoinLabel")
-	local coins = player.leaderstats and player.leaderstats:FindFirstChild("Coins")
+	local leaderstats = player:FindFirstChild("leaderstats")
+	local coins = leaderstats and leaderstats:FindFirstChild("Coins")
 	if label and coins then
 		label.Text = tostring(coins.Value)
 	end
@@ -87,14 +88,15 @@ Players.PlayerAdded:Connect(function(player)
 			powerUpConnection = nil
 		end
 
-		local coins = player.leaderstats and player.leaderstats:FindFirstChild("Coins")
+		local leaderstats = player:WaitForChild("leaderstats", 10)
+		local coins = leaderstats and leaderstats:FindFirstChild("Coins")
 		if coins then
 			coinsConnection = coins.Changed:Connect(function()
 				updateHUD(player)
 			end)
 		end
 
-		local powerUp = player:FindFirstChild("PowerUp")
+		local powerUp = player:WaitForChild("PowerUp", 10)
 		if powerUp then
 			powerUpConnection = powerUp.Changed:Connect(function()
 				updateHUD(player)

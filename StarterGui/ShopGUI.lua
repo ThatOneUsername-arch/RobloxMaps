@@ -19,13 +19,17 @@ feedbackLabel.Font = Enum.Font.GothamBold
 feedbackLabel.Visible = false
 feedbackLabel.Parent = shopGui
 
-local feedbackRemote = ReplicatedStorage:WaitForChild("ShopFeedback")
-feedbackRemote.OnClientEvent:Connect(function(message)
-	feedbackLabel.Text = message
-	feedbackLabel.Visible = true
-	task.delay(3, function()
-		feedbackLabel.Visible = false
-	end)
+task.spawn(function()
+	local feedbackRemote = ReplicatedStorage:WaitForChild("ShopFeedback", 10)
+	if feedbackRemote then
+		feedbackRemote.OnClientEvent:Connect(function(message)
+			feedbackLabel.Text = message
+			feedbackLabel.Visible = true
+			task.delay(3, function()
+				feedbackLabel.Visible = false
+			end)
+		end)
+	end
 end)
 
 local mainFrame = Instance.new("Frame")

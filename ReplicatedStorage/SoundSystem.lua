@@ -1,3 +1,5 @@
+-- SoundSystem: Creates sounds in SoundService accessible to all scripts
+-- NOTE: This must be a ModuleScript in Roblox Studio
 local SoundService = game:GetService("SoundService")
 
 local sounds = {}

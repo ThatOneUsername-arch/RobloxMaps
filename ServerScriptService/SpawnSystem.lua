@@ -1,9 +1,43 @@
+-- SpawnSystem: Handles player join, leaderstats, and starter pickaxe
 local Players = game:GetService("Players")
-local Config = require(script.Parent.Data.GameConfig)
-local ShopSystem = require(script.Parent.ShopSystem)
+local ServerStorage = game:GetService("ServerStorage")
+
+local economy = ServerStorage:WaitForChild("Economy")
+local pickaxesFolder = economy:WaitForChild("Pickaxes")
 
 local SPAWN_POSITION = Vector3.new(0, 10, 0)
 local POWER_UPS = {"SpeedBoost", "DoubleDrops", "InstantMine", "Shield"}
+
+local function createStarterPickaxe()
+	local starterFolder = pickaxesFolder:WaitForChild("Starter")
+	local color = starterFolder:WaitForChild("Color").Value
+	local material = starterFolder:WaitForChild("Material").Value
+	local damage = starterFolder:WaitForChild("Damage").Value
+
+	local tool = Instance.new("Tool")
+	tool.Name = "StarterPickaxe"
+	tool.RequiresHandle = true
+	tool.ToolTip = "Starter Pickaxe - Damage: " .. damage
+
+	local handle = Instance.new("Part")
+	handle.Name = "Handle"
+	handle.Size = Vector3.new(0.4, 0.4, 3.5)
+	handle.Color = color
+	handle.Material = Enum.Material[material] or Enum.Material.Wood
+	handle.Parent = tool
+
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.FileMesh
+	mesh.MeshId = "rbxassetid://92656610"
+	mesh.Scale = Vector3.new(0.85, 0.85, 0.85)
+	mesh.Parent = handle
+
+	tool.GripPos = Vector3.new(0, 0, -1.5)
+	tool.GripForward = Vector3.new(0, 0, -1)
+	tool.GripUp = Vector3.new(0, 1, 0)
+
+	return tool
+end
 
 Players.PlayerAdded:Connect(function(player)
 	local leaderstats = Instance.new("Folder")
@@ -33,8 +67,7 @@ Players.PlayerAdded:Connect(function(player)
 		end
 
 		if not hasPickaxe then
-			local starterData = Config.Pickaxes.Starter
-			local pickaxe = ShopSystem.CreatePickaxeTool("Starter", starterData)
+			local pickaxe = createStarterPickaxe()
 			pickaxe.Parent = player.Backpack
 		end
 	end)

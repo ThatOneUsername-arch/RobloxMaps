@@ -1,6 +1,10 @@
-local Config = require(script.Parent.Data.GameConfig)
+-- ShopSystem: Handles pickaxe purchases
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local SoundSystem = require(ReplicatedStorage.SoundSystem)
+local ServerStorage = game:GetService("ServerStorage")
+
+local economy = ServerStorage:WaitForChild("Economy")
+local pickaxesFolder = economy:WaitForChild("Pickaxes")
 
 local shopRemote = Instance.new("RemoteEvent")
 shopRemote.Name = "ShopPurchase"
@@ -20,7 +24,7 @@ local function createPickaxeTool(name, data)
 	handle.Name = "Handle"
 	handle.Size = Vector3.new(0.4, 0.4, 3.5)
 	handle.Color = data.Color
-	handle.Material = data.Material
+	handle.Material = Enum.Material[data.Material] or Enum.Material.Metal
 	handle.Parent = tool
 
 	local mesh = Instance.new("SpecialMesh")
@@ -29,15 +33,11 @@ local function createPickaxeTool(name, data)
 	mesh.Scale = Vector3.new(0.85, 0.85, 0.85)
 	mesh.Parent = handle
 
-	local weld = Instance.new("Vector3Value")
-	weld.Name = "GripPos"
-	weld.Value = Vector3.new(0, 0, -1.5)
-
 	tool.GripPos = Vector3.new(0, 0, -1.5)
 	tool.GripForward = Vector3.new(0, 0, -1)
 	tool.GripUp = Vector3.new(0, 1, 0)
 
-	if data.Material == Enum.Material.Glass then
+	if data.Material == "Glass" then
 		local pointLight = Instance.new("PointLight")
 		pointLight.Color = data.Color
 		pointLight.Brightness = 0.5
@@ -45,27 +45,29 @@ local function createPickaxeTool(name, data)
 		pointLight.Parent = handle
 	end
 
-	if name == "Obsidian" then
-		local particle = Instance.new("ParticleEmitter")
-		particle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-		particle.Color = ColorSequence.new(Color3.fromRGB(128, 0, 255))
-		particle.Rate = 8
-		particle.Lifetime = NumberRange.new(0.5, 1)
-		particle.Speed = NumberRange.new(1, 2)
-		particle.Size = NumberSequence.new(0.1, 0)
-		particle.Parent = handle
-	end
-
 	return tool
+end
+
+local function getPickaxeData(name)
+	local folder = pickaxesFolder:FindFirstChild(name)
+	if not folder then return nil end
+	return {
+		Damage = folder:WaitForChild("Damage").Value,
+		Cost = folder:WaitForChild("Cost").Value,
+		Color = folder:WaitForChild("Color").Value,
+		Material = folder:WaitForChild("Material").Value
+	}
 end
 
 shopRemote.OnServerEvent:Connect(function(player, itemType, itemName)
 	if itemType ~= "Pickaxe" then return end
 
-	local pickaxeData = Config.Pickaxes[itemName]
+	local pickaxeData = getPickaxeData(itemName)
 	if not pickaxeData then return end
 
-	local coins = player.leaderstats and player.leaderstats:FindFirstChild("Coins")
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if not leaderstats then return end
+	local coins = leaderstats:FindFirstChild("Coins")
 	if not coins then return end
 
 	if coins.Value < pickaxeData.Cost then
@@ -73,7 +75,7 @@ shopRemote.OnServerEvent:Connect(function(player, itemType, itemName)
 		return
 	end
 
-	coins.Value -= pickaxeData.Cost
+	coins.Value = coins.Value - pickaxeData.Cost
 
 	for _, existingTool in ipairs(player.Backpack:GetChildren()) do
 		if existingTool:IsA("Tool") and existingTool.Name:find("Pickaxe") then
@@ -90,10 +92,5 @@ shopRemote.OnServerEvent:Connect(function(player, itemType, itemName)
 
 	local tool = createPickaxeTool(itemName, pickaxeData)
 	tool.Parent = player.Backpack
-	SoundSystem.PlaySound("Purchase")
 	feedbackRemote:FireClient(player, "Purchased " .. itemName .. " Pickaxe!")
 end)
-
-return {
-	CreatePickaxeTool = createPickaxeTool
-}
