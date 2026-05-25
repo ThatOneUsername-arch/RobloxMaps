@@ -3,16 +3,13 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
-local economy = ServerStorage:WaitForChild("Economy")
-local pickaxesFolder = economy:WaitForChild("Pickaxes")
+ServerStorage:WaitForChild("GameReady")
 
-local shopRemote = Instance.new("RemoteEvent")
-shopRemote.Name = "ShopPurchase"
-shopRemote.Parent = ReplicatedStorage
-
-local feedbackRemote = Instance.new("RemoteEvent")
-feedbackRemote.Name = "ShopFeedback"
-feedbackRemote.Parent = ReplicatedStorage
+local economy = ServerStorage.Economy
+local pickaxesFolder = economy.Pickaxes
+local remotes = ReplicatedStorage:WaitForChild("Remotes")
+local shopRemote = remotes:WaitForChild("ShopPurchase")
+local feedbackRemote = remotes:WaitForChild("ShopFeedback")
 
 local function createPickaxeTool(name, data)
 	local tool = Instance.new("Tool")
@@ -52,10 +49,10 @@ local function getPickaxeData(name)
 	local folder = pickaxesFolder:FindFirstChild(name)
 	if not folder then return nil end
 	return {
-		Damage = folder:WaitForChild("Damage").Value,
-		Cost = folder:WaitForChild("Cost").Value,
-		Color = folder:WaitForChild("Color").Value,
-		Material = folder:WaitForChild("Material").Value
+		Damage = folder.Damage.Value,
+		Cost = folder.Cost.Value,
+		Color = folder.Color.Value,
+		Material = folder.Material.Value
 	}
 end
 

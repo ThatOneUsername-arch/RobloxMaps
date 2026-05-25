@@ -1,11 +1,11 @@
--- PortalSystem: Portal unlocking based on coins
--- MapSetup creates the portal Parts; this script handles unlocking locked ones
-
+-- PortalSystem: Unlocks portals when player earns enough coins
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
-local economy = ServerStorage:WaitForChild("Economy")
-local portalsFolder = economy:WaitForChild("Portals")
+ServerStorage:WaitForChild("GameReady")
+
+local economy = ServerStorage.Economy
+local portalsFolder = economy.Portals
 
 local unlockedPortals = {}
 
@@ -24,8 +24,8 @@ local function tryUnlockPortals(player)
 
 	for _, portalConfig in ipairs(portalsFolder:GetChildren()) do
 		local portalName = portalConfig.Name
-		local required = portalConfig:WaitForChild("RequiredCoins").Value
-		local destination = portalConfig:WaitForChild("Destination").Value
+		local required = portalConfig.RequiredCoins.Value
+		local destination = portalConfig.Destination.Value
 
 		if coins.Value >= required and not unlockedPortals[player.UserId][portalName] then
 			unlockedPortals[player.UserId][portalName] = true

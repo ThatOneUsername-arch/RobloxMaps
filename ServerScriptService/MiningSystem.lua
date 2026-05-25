@@ -1,10 +1,12 @@
--- MiningSystem: Handles crystal mining, damage, rewards, and respawn
+-- MiningSystem: Crystal mining, damage, rewards, respawn
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
-local economy = ServerStorage:WaitForChild("Economy")
-local pickaxesFolder = economy:WaitForChild("Pickaxes")
-local crystalsFolder = economy:WaitForChild("Crystals")
+ServerStorage:WaitForChild("GameReady")
+
+local economy = ServerStorage.Economy
+local pickaxesFolder = economy.Pickaxes
+local crystalsFolder = economy.Crystals
 
 local miningPlayers = {}
 local crystalStates = {}
@@ -15,7 +17,7 @@ local function getPickaxeDamage(player)
 
 	for _, pickaxe in ipairs(pickaxesFolder:GetChildren()) do
 		if tool.Name:find(pickaxe.Name) then
-			return pickaxe:WaitForChild("Damage").Value
+			return pickaxe.Damage.Value
 		end
 	end
 	return 1
@@ -25,10 +27,10 @@ local function getCrystalConfig(typeName)
 	local folder = crystalsFolder:FindFirstChild(typeName)
 	if not folder then return nil end
 	return {
-		Value = folder:WaitForChild("Value").Value,
-		Health = folder:WaitForChild("Health").Value,
-		RespawnTime = folder:WaitForChild("RespawnTime").Value,
-		Color = folder:WaitForChild("Color").Value
+		Value = folder.Value.Value,
+		Health = folder.Health.Value,
+		RespawnTime = folder.RespawnTime.Value,
+		Color = folder.Color.Value
 	}
 end
 
@@ -132,7 +134,6 @@ local function setupCrystalEvents(crystal)
 	if not clickDetector then return end
 
 	local typeName = crystal:FindFirstChild("CrystalType")
-	local config = typeName and getCrystalConfig(typeName.Value)
 	local maxHealth = crystal:FindFirstChild("Health") and crystal.Health.Value or 3
 
 	crystalStates[crystal] = {

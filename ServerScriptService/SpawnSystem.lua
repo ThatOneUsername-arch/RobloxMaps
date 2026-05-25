@@ -1,6 +1,8 @@
--- SpawnSystem: Handles player join, leaderstats, and starter pickaxe
+-- SpawnSystem: Player join, leaderstats, starter pickaxe
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
+
+ServerStorage:WaitForChild("GameReady")
 
 local economy = ServerStorage:WaitForChild("Economy")
 local pickaxesFolder = economy:WaitForChild("Pickaxes")
@@ -10,9 +12,9 @@ local POWER_UPS = {"SpeedBoost", "DoubleDrops", "InstantMine", "Shield"}
 
 local function createStarterPickaxe()
 	local starterFolder = pickaxesFolder:WaitForChild("Starter")
-	local color = starterFolder:WaitForChild("Color").Value
-	local material = starterFolder:WaitForChild("Material").Value
-	local damage = starterFolder:WaitForChild("Damage").Value
+	local color = starterFolder.Color.Value
+	local material = starterFolder.Material.Value
+	local damage = starterFolder.Damage.Value
 
 	local tool = Instance.new("Tool")
 	tool.Name = "StarterPickaxe"

@@ -1,4 +1,4 @@
-local Players = game:GetService("Players")
+-- DailyBonusGUI: Daily bonus claim button (top-right, row 1)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 
@@ -9,29 +9,31 @@ bonusGui.Parent = StarterGui
 
 local bonusButton = Instance.new("TextButton")
 bonusButton.Name = "DailyBonusButton"
-bonusButton.Size = UDim2.new(0, 150, 0, 50)
-bonusButton.Position = UDim2.new(1, -160, 0, 10)
+bonusButton.Size = UDim2.new(0, 120, 0, 40)
+bonusButton.Position = UDim2.new(1, -130, 0, 10)
 bonusButton.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
 bonusButton.Text = "DAILY BONUS"
 bonusButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-bonusButton.TextSize = 16
+bonusButton.TextSize = 14
 bonusButton.Font = Enum.Font.GothamBold
 bonusButton.Parent = bonusGui
 
 local feedbackLabel = Instance.new("TextLabel")
-feedbackLabel.Size = UDim2.new(0, 300, 0, 50)
-feedbackLabel.Position = UDim2.new(0.5, -150, 0, 70)
+feedbackLabel.Size = UDim2.new(0, 250, 0, 40)
+feedbackLabel.Position = UDim2.new(1, -380, 0, 10)
 feedbackLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 feedbackLabel.BackgroundTransparency = 0.3
 feedbackLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-feedbackLabel.TextSize = 18
+feedbackLabel.TextSize = 16
 feedbackLabel.Font = Enum.Font.GothamBold
 feedbackLabel.Text = ""
 feedbackLabel.Visible = false
 feedbackLabel.Parent = bonusGui
 
 bonusButton.MouseButton1Click:Connect(function()
-	local bonusRemote = ReplicatedStorage:FindFirstChild("ClaimDailyBonus")
+	local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+	if not remotes then return end
+	local bonusRemote = remotes:FindFirstChild("ClaimDailyBonus")
 	if not bonusRemote then return end
 
 	local success, message = bonusRemote:InvokeServer()

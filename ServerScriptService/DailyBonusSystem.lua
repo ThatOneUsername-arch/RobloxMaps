@@ -4,26 +4,35 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
-local economy = ServerStorage:WaitForChild("Economy")
-local dailyConfig = economy:WaitForChild("DailyBonus")
-local BONUS_AMOUNT = dailyConfig:WaitForChild("Amount").Value
-local COOLDOWN_HOURS = dailyConfig:WaitForChild("CooldownHours").Value
+ServerStorage:WaitForChild("GameReady")
 
--- React to live value changes
-dailyConfig.Amount.Changed:Connect(function(val)
-	BONUS_AMOUNT = val
+local economy = ServerStorage.Economy
+local dailyConfig = economy.DailyBonus
+local BONUS_AMOUNT = dailyConfig.Amount.Value
+local COOLDOWN_HOURS = dailyConfig.CooldownHours.Value
+
+dailyConfig.Amount.Changed:Connect(function(val) BONUS_AMOUNT = val end)
+dailyConfig.CooldownHours.Changed:Connect(function(val) COOLDOWN_HOURS = val end)
+
+local remotes = ReplicatedStorage:WaitForChild("Remotes")
+local bonusRemote = remotes:WaitForChild("ClaimDailyBonus")
+
+-- Graceful DataStore handling
+local dailyBonusStore
+local datastoreEnabled = false
+
+local ok, store = pcall(function()
+	return DataStoreService:GetDataStore("DailyBonusStore")
 end)
-dailyConfig.CooldownHours.Changed:Connect(function(val)
-	COOLDOWN_HOURS = val
-end)
-
-local dailyBonusStore = DataStoreService:GetDataStore("DailyBonusStore")
-
-local bonusRemote = Instance.new("RemoteFunction")
-bonusRemote.Name = "ClaimDailyBonus"
-bonusRemote.Parent = ReplicatedStorage
+if ok and store then
+	dailyBonusStore = store
+	datastoreEnabled = true
+else
+	warn("[DailyBonusSystem] DataStore unavailable - daily bonus will always be claimable")
+end
 
 local function getLastClaimTime(player)
+	if not datastoreEnabled then return 0 end
 	local success, lastClaim = pcall(function()
 		return dailyBonusStore:GetAsync(tostring(player.UserId))
 	end)
@@ -31,6 +40,7 @@ local function getLastClaimTime(player)
 end
 
 local function setLastClaimTime(player)
+	if not datastoreEnabled then return end
 	pcall(function()
 		dailyBonusStore:SetAsync(tostring(player.UserId), os.time())
 	end)

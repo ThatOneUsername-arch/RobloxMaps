@@ -1,3 +1,4 @@
+-- ShopGUI: Client-side shop interface (right side, below leaderboard)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
@@ -7,31 +8,37 @@ shopGui.Name = "ShopGUI"
 shopGui.ResetOnSpawn = false
 shopGui.Parent = StarterGui
 
+-- Feedback label
 local feedbackLabel = Instance.new("TextLabel")
 feedbackLabel.Name = "FeedbackLabel"
 feedbackLabel.Size = UDim2.new(0, 300, 0, 50)
-feedbackLabel.Position = UDim2.new(0.5, -150, 0, 220)
+feedbackLabel.Position = UDim2.new(0.5, -150, 0, 10)
 feedbackLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 feedbackLabel.BackgroundTransparency = 0.3
 feedbackLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 feedbackLabel.TextSize = 18
 feedbackLabel.Font = Enum.Font.GothamBold
+feedbackLabel.Text = ""
 feedbackLabel.Visible = false
 feedbackLabel.Parent = shopGui
 
+-- Listen for shop feedback
 task.spawn(function()
-	local feedbackRemote = ReplicatedStorage:WaitForChild("ShopFeedback", 10)
-	if feedbackRemote then
-		feedbackRemote.OnClientEvent:Connect(function(message)
-			feedbackLabel.Text = message
-			feedbackLabel.Visible = true
-			task.delay(3, function()
-				feedbackLabel.Visible = false
-			end)
+	local remotes = ReplicatedStorage:WaitForChild("Remotes", 10)
+	if not remotes then return end
+	local feedbackRemote = remotes:WaitForChild("ShopFeedback", 10)
+	if not feedbackRemote then return end
+
+	feedbackRemote.OnClientEvent:Connect(function(message)
+		feedbackLabel.Text = message
+		feedbackLabel.Visible = true
+		task.delay(3, function()
+			feedbackLabel.Visible = false
 		end)
-	end
+	end)
 end)
 
+-- Shop frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "ShopFrame"
 mainFrame.Size = UDim2.new(0, 400, 0, 500)
@@ -45,7 +52,7 @@ mainFrame.Parent = shopGui
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 50)
 title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-title.Text = "⛏️ PICKAXE SHOP"
+title.Text = "PICKAXE SHOP"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 24
 title.Font = Enum.Font.GothamBold
@@ -84,7 +91,7 @@ for _, pickaxe in ipairs(pickaxes) do
 	itemFrame.Size = UDim2.new(1, -10, 0, 80)
 	itemFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 	itemFrame.Parent = scrollFrame
-	
+
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Size = UDim2.new(0.6, 0, 0, 30)
 	nameLabel.Position = UDim2.new(0, 10, 0, 5)
@@ -95,7 +102,7 @@ for _, pickaxe in ipairs(pickaxes) do
 	nameLabel.Font = Enum.Font.GothamBold
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	nameLabel.Parent = itemFrame
-	
+
 	local statsLabel = Instance.new("TextLabel")
 	statsLabel.Size = UDim2.new(0.6, 0, 0, 20)
 	statsLabel.Position = UDim2.new(0, 10, 0, 35)
@@ -106,33 +113,38 @@ for _, pickaxe in ipairs(pickaxes) do
 	statsLabel.Font = Enum.Font.Gotham
 	statsLabel.TextXAlignment = Enum.TextXAlignment.Left
 	statsLabel.Parent = itemFrame
-	
+
 	local buyButton = Instance.new("TextButton")
 	buyButton.Size = UDim2.new(0, 100, 0, 60)
 	buyButton.Position = UDim2.new(1, -110, 0.5, -30)
 	buyButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-	buyButton.Text = pickaxe.Cost == 0 and "FREE" or "💰 " .. pickaxe.Cost
+	buyButton.Text = pickaxe.Cost == 0 and "FREE" or pickaxe.Cost .. " coins"
 	buyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	buyButton.TextSize = 16
+	buyButton.TextSize = 14
 	buyButton.Font = Enum.Font.GothamBold
 	buyButton.Parent = itemFrame
-	
+
 	buyButton.MouseButton1Click:Connect(function()
-		local shopRemote = ReplicatedStorage:WaitForChild("ShopPurchase")
-		shopRemote:FireServer("Pickaxe", pickaxe.Name)
+		local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+		if not remotes then return end
+		local shopRemote = remotes:FindFirstChild("ShopPurchase")
+		if shopRemote then
+			shopRemote:FireServer("Pickaxe", pickaxe.Name)
+		end
 	end)
 end
 
 scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #pickaxes * 90)
 
+-- Open button (right side, below daily bonus)
 local openButton = Instance.new("TextButton")
 openButton.Name = "OpenShopButton"
-openButton.Size = UDim2.new(0, 120, 0, 50)
-openButton.Position = UDim2.new(1, -130, 0, 150)
+openButton.Size = UDim2.new(0, 120, 0, 40)
+openButton.Position = UDim2.new(1, -130, 0, 120)
 openButton.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-openButton.Text = "🛒 SHOP"
+openButton.Text = "SHOP"
 openButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-openButton.TextSize = 20
+openButton.TextSize = 18
 openButton.Font = Enum.Font.GothamBold
 openButton.Parent = shopGui
 

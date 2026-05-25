@@ -1,10 +1,14 @@
--- PowerUpSystem: Manages power-up activation and effects
+-- PowerUpSystem: Power-up activation and effects
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
-local economy = ServerStorage:WaitForChild("Economy")
-local powerUpsFolder = economy:WaitForChild("PowerUps")
+ServerStorage:WaitForChild("GameReady")
+
+local economy = ServerStorage.Economy
+local powerUpsFolder = economy.PowerUps
+local remotes = ReplicatedStorage:WaitForChild("Remotes")
+local powerUpRemote = remotes:WaitForChild("ActivatePowerUp")
 
 local activePowerUps = {}
 
@@ -86,16 +90,10 @@ local function activatePowerUp(player)
 	powerUpValue.Value = "None"
 end
 
--- Create RemoteEvent
-local powerUpRemote = Instance.new("RemoteEvent")
-powerUpRemote.Name = "ActivatePowerUp"
-powerUpRemote.Parent = ReplicatedStorage
-
 powerUpRemote.OnServerEvent:Connect(function(player)
 	activatePowerUp(player)
 end)
 
--- Cleanup
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function(char)
 		local humanoid = char:WaitForChild("Humanoid")

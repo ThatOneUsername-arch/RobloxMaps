@@ -1,18 +1,18 @@
--- GateSystem: Creates gates that block Deep Tunnel access until paid
+-- GateSystem: Blocks Deep Tunnel access until player pays
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
-local economy = ServerStorage:WaitForChild("Economy")
-local gates = economy:WaitForChild("Gates")
-local UNLOCK_COST = gates:WaitForChild("DeepTunnelCost").Value
+ServerStorage:WaitForChild("GameReady")
+
+local economy = ServerStorage.Economy
+local UNLOCK_COST = economy.Gates.DeepTunnelCost.Value
+
+economy.Gates.DeepTunnelCost.Changed:Connect(function(newCost)
+	UNLOCK_COST = newCost
+end)
 
 local GATE_POSITION = Vector3.new(120, 15, 0)
 local unlockedPlayers = {}
-
--- Listen for live changes to the cost
-gates.DeepTunnelCost.Changed:Connect(function(newCost)
-	UNLOCK_COST = newCost
-end)
 
 local function createGateForPlayer(player)
 	local startingIsland = workspace:FindFirstChild("StartingIsland")
@@ -48,8 +48,6 @@ local function createGateForPlayer(player)
 			gate:Destroy()
 		end
 	end)
-
-	return gate
 end
 
 Players.PlayerAdded:Connect(function(player)

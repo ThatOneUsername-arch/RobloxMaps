@@ -1,19 +1,34 @@
--- LeaderboardSystem: Tracks coins in DataStore and broadcasts top 10
+-- LeaderboardSystem: DataStore tracking and top 10 broadcast
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
-local leaderboardStore = DataStoreService:GetOrderedDataStore("CrystalMinerLeaderboard")
+ServerStorage:WaitForChild("GameReady")
+
+local remotes = ReplicatedStorage:WaitForChild("Remotes")
+local updateRemote = remotes:WaitForChild("UpdateLeaderboard")
 
 local SAVE_INTERVAL = 10
 local UPDATE_INTERVAL = 30
 local pendingSaves = {}
 
-local updateRemote = Instance.new("RemoteEvent")
-updateRemote.Name = "UpdateLeaderboard"
-updateRemote.Parent = ReplicatedStorage
+-- Graceful DataStore handling (won't work in Studio without API enabled)
+local leaderboardStore
+local datastoreEnabled = false
+
+local ok, store = pcall(function()
+	return DataStoreService:GetOrderedDataStore("CrystalMinerLeaderboard")
+end)
+if ok and store then
+	leaderboardStore = store
+	datastoreEnabled = true
+else
+	warn("[LeaderboardSystem] DataStore unavailable - leaderboard will use local data only")
+end
 
 local function flushPlayerSave(player)
+	if not datastoreEnabled then return end
 	local leaderstats = player:FindFirstChild("leaderstats")
 	if not leaderstats then return end
 	local coins = leaderstats:FindFirstChild("Coins")
@@ -25,30 +40,43 @@ local function flushPlayerSave(player)
 end
 
 local function getTopPlayers(count)
-	local success, pages = pcall(function()
-		return leaderboardStore:GetSortedAsync(false, count or 10)
-	end)
-
-	if not success or not pages then return {} end
-
-	local topPlayers = {}
-	local ok, entries = pcall(function()
-		return pages:GetCurrentPage()
-	end)
-
-	if not ok or not entries then return {} end
-
-	for _, entry in ipairs(entries) do
-		local userId = tonumber(entry.key)
-		local nameSuccess, username = pcall(function()
-			return Players:GetNameFromUserIdAsync(userId)
+	if datastoreEnabled then
+		local success, pages = pcall(function()
+			return leaderboardStore:GetSortedAsync(false, count or 10)
 		end)
-		table.insert(topPlayers, {
-			Name = nameSuccess and username or "Unknown",
-			Coins = entry.value
-		})
+
+		if success and pages then
+			local topPlayers = {}
+			local ok2, entries = pcall(function()
+				return pages:GetCurrentPage()
+			end)
+
+			if ok2 and entries then
+				for _, entry in ipairs(entries) do
+					local userId = tonumber(entry.key)
+					local nameSuccess, username = pcall(function()
+						return Players:GetNameFromUserIdAsync(userId)
+					end)
+					table.insert(topPlayers, {
+						Name = nameSuccess and username or "Unknown",
+						Coins = entry.value
+					})
+				end
+				return topPlayers
+			end
+		end
 	end
 
+	-- Fallback: use current players as leaderboard
+	local topPlayers = {}
+	for _, player in ipairs(Players:GetPlayers()) do
+		local leaderstats = player:FindFirstChild("leaderstats")
+		local coins = leaderstats and leaderstats:FindFirstChild("Coins")
+		if coins then
+			table.insert(topPlayers, {Name = player.Name, Coins = coins.Value})
+		end
+	end
+	table.sort(topPlayers, function(a, b) return a.Coins > b.Coins end)
 	return topPlayers
 end
 
@@ -81,7 +109,6 @@ task.spawn(function()
 	end
 end)
 
--- Track coin changes per player
 Players.PlayerAdded:Connect(function(player)
 	local leaderstats = player:WaitForChild("leaderstats", 10)
 	if not leaderstats then return end
