@@ -8,7 +8,7 @@ local miningPlayers = {}
 local function getPickaxeDamage(player)
 	local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
 	if not tool then return 1 end
-	
+
 	for pickaxeName, pickaxeData in pairs(Config.Pickaxes) do
 		if tool.Name:find(pickaxeName) then
 			return pickaxeData.Damage
@@ -25,7 +25,7 @@ local function createMiningEffect(crystal)
 	particle.Lifetime = NumberRange.new(0.5, 1)
 	particle.Speed = NumberRange.new(5, 10)
 	particle.Parent = crystal
-	
+
 	task.delay(0.2, function()
 		particle:Destroy()
 	end)
@@ -35,10 +35,10 @@ local function damageCrystal(crystal, player)
 	local health = crystal:FindFirstChild("Health")
 	local crystalType = crystal:FindFirstChild("CrystalType")
 	if not health or not crystalType then return end
-	
+
 	local damage = getPickaxeDamage(player)
 	local powerUp = PowerUpSystem.GetActivePowerUp(player)
-	
+
 	if powerUp and powerUp.Type == "InstantMine" and powerUp.Uses > 0 then
 		health.Value = 0
 		powerUp.Uses -= 1
@@ -48,16 +48,16 @@ local function damageCrystal(crystal, player)
 	else
 		health.Value = math.max(0, health.Value - damage)
 	end
-	
+
 	local state = CrystalSystem.GetCrystalState(crystal)
 	if state then
 		local healthPercent = health.Value / state.MaxHealth
 		crystal.Size = state.OriginalSize * healthPercent
 	end
-	
+
 	createMiningEffect(crystal)
 	SoundSystem.PlaySound("MineHit")
-	
+
 	if health.Value <= 0 then
 		local crystalConfig = Config.Crystals[crystalType.Value]
 		local coins = player.leaderstats and player.leaderstats:FindFirstChild("Coins")
@@ -69,16 +69,16 @@ local function damageCrystal(crystal, player)
 			coins.Value += value
 			SoundSystem.PlaySound("CoinCollect")
 		end
-		
+
 		SoundSystem.PlaySound("CrystalBreak")
-		
+
 		local respawnData = {
 			Type = crystalType.Value,
 			Position = crystal.Position,
 			RespawnTime = crystalConfig.RespawnTime
 		}
 		local area = state.Area
-		
+
 		crystal:Destroy()
 		task.spawn(function()
 			CrystalSystem.RespawnCrystal(respawnData, area)
@@ -89,21 +89,20 @@ end
 local function setupCrystalEvents(crystal)
 	local clickDetector = crystal:FindFirstChildOfClass("ClickDetector")
 	if not clickDetector then return end
-	
+
 	clickDetector.MouseClick:Connect(function(player)
+		miningPlayers[player] = nil
 		damageCrystal(crystal, player)
 	end)
-	
+
 	clickDetector.RightMouseClick:Connect(function(player)
-		if not miningPlayers[player] then
-			miningPlayers[player] = crystal
-			task.spawn(function()
-				while miningPlayers[player] == crystal and crystal.Parent do
-					damageCrystal(crystal, player)
-					wait(0.5)
-				end
-			end)
-		end
+		miningPlayers[player] = crystal
+		task.spawn(function()
+			while miningPlayers[player] == crystal and crystal.Parent do
+				damageCrystal(crystal, player)
+				task.wait(0.5)
+			end
+		end)
 	end)
 end
 

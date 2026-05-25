@@ -1,10 +1,10 @@
 local GameConfig = {}
 
 GameConfig.Pickaxes = {
-	Starter = {MiningSpeed = 1.0, Damage = 1, Cost = 0},
-	Iron = {MiningSpeed = 2.0, Damage = 2, Cost = 100},
-	Diamond = {MiningSpeed = 3.0, Damage = 3, Cost = 500},
-	Obsidian = {MiningSpeed = 4.0, Damage = 5, Cost = 2000}
+	Starter = {MiningSpeed = 1.0, Damage = 1, Cost = 0, Color = Color3.fromRGB(139, 90, 43), Material = Enum.Material.Wood},
+	Iron = {MiningSpeed = 2.0, Damage = 2, Cost = 100, Color = Color3.fromRGB(180, 180, 190), Material = Enum.Material.Metal},
+	Diamond = {MiningSpeed = 3.0, Damage = 3, Cost = 500, Color = Color3.fromRGB(0, 191, 255), Material = Enum.Material.Glass},
+	Obsidian = {MiningSpeed = 4.0, Damage = 5, Cost = 2000, Color = Color3.fromRGB(30, 0, 50), Material = Enum.Material.Obsidian}
 }
 
 GameConfig.PowerUps = {

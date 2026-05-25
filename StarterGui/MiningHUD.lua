@@ -56,32 +56,61 @@ powerUpLabel.Font = Enum.Font.Gotham
 powerUpLabel.TextXAlignment = Enum.TextXAlignment.Left
 powerUpLabel.Parent = powerUpFrame
 
+local function updateHUD(player)
+	local gui = player.PlayerGui:FindFirstChild("MiningHUD")
+	if not gui then return end
+
+	local label = gui.CoinFrame:FindFirstChild("CoinLabel")
+	local coins = player.leaderstats and player.leaderstats:FindFirstChild("Coins")
+	if label and coins then
+		label.Text = tostring(coins.Value)
+	end
+
+	local puLabel = gui.PowerUpFrame:FindFirstChild("PowerUpLabel")
+	local powerUp = player:FindFirstChild("PowerUp")
+	if puLabel and powerUp then
+		puLabel.Text = "Power-up: " .. powerUp.Value
+	end
+end
+
 Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function()
-		wait(1)
+	local coinsConnection
+	local powerUpConnection
+
+	local function connectListeners()
+		if coinsConnection then
+			coinsConnection:Disconnect()
+			coinsConnection = nil
+		end
+		if powerUpConnection then
+			powerUpConnection:Disconnect()
+			powerUpConnection = nil
+		end
+
 		local coins = player.leaderstats and player.leaderstats:FindFirstChild("Coins")
-		local powerUp = player:FindFirstChild("PowerUp")
-		
 		if coins then
-			coins.Changed:Connect(function()
-				local gui = player.PlayerGui:FindFirstChild("MiningHUD")
-				if gui then
-					local label = gui.CoinFrame:FindFirstChild("CoinLabel")
-					if label then
-						label.Text = tostring(coins.Value)
-					end
-				end
+			coinsConnection = coins.Changed:Connect(function()
+				updateHUD(player)
 			end)
 		end
-		
+
+		local powerUp = player:FindFirstChild("PowerUp")
 		if powerUp then
-			local gui = player.PlayerGui:FindFirstChild("MiningHUD")
-			if gui then
-				local label = gui.PowerUpFrame:FindFirstChild("PowerUpLabel")
-				if label then
-					label.Text = "Power-up: " .. powerUp.Value
-				end
-			end
+			powerUpConnection = powerUp.Changed:Connect(function()
+				updateHUD(player)
+			end)
 		end
+
+		updateHUD(player)
+	end
+
+	player.CharacterAdded:Connect(function()
+		task.wait(0.5)
+		connectListeners()
 	end)
+
+	if player.Character then
+		task.wait(0.5)
+		connectListeners()
+	end
 end)
